@@ -1,5 +1,7 @@
 import express, { Express, Request, Response } from 'express';
 import cors from 'cors';
+import fs from 'fs';
+import path from 'path';
 import { memberRouter } from './services/member.service';
 import { storeRouter } from './services/store.service';
 import { catalogRouter } from './services/catalog.service';
@@ -31,14 +33,27 @@ export function createApp(): Express {
         { domain: 'Payment & Wallet', path: '/api/v1/payments' },
         { domain: 'Shipping & Logistics', path: '/api/v1/shipping' }
       ],
+      openapiFile: '/openapi.yaml',
       documentation: '/api/docs'
     });
+  });
+
+  // Serve openapi.yaml directly
+  app.get('/openapi.yaml', (_req: Request, res: Response) => {
+    const yamlPath = path.resolve(process.cwd(), 'openapi.yaml');
+    if (fs.existsSync(yamlPath)) {
+      res.setHeader('Content-Type', 'text/yaml');
+      res.send(fs.readFileSync(yamlPath, 'utf-8'));
+    } else {
+      res.status(404).json({ error: 'openapi.yaml not found' });
+    }
   });
 
   // API Documentation specification endpoint
   app.get('/api/docs', (_req: Request, res: Response) => {
     res.json({
-      openapi: '3.0.0',
+      openapi: '3.0.3',
+      specUrl: '/openapi.yaml',
       info: {
         title: 'Bookstore E-Commerce Backend API',
         version: '1.0.0',
